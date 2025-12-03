@@ -1,0 +1,8 @@
+{
+  "name": "LinkStream AI",
+  "description": "A web-based interface for USB device connection simulation and screen mirroring, featuring AI-powered screen analysis using Gemini 2.5 Flash.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
