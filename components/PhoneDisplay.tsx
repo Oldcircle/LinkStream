@@ -108,32 +108,37 @@ export const PhoneDisplay: React.FC<PhoneDisplayProps> = ({
 
     // --- Media & Browser Logic ---
 
-    const startScreenShare = async () => {
+    const startUsbMirror = async () => {
+        if (!canvasRef.current) {
+            onLog("Canvas not available", "error");
+            return;
+        }
         try {
-            const mediaStream = await navigator.mediaDevices.getDisplayMedia({
-                video: { cursor: "always" } as any,
-                audio: false
-            });
-            if (videoRef.current) {
-                videoRef.current.srcObject = mediaStream;
-                videoRef.current.play();
-                setStreamActive(true);
-            }
+            const { startUsbMirror } = await import('../services/usbMirror');
+            // Keep ref so we can stop later
+            // @ts-ignore dynamic module shape
+            (usbControllerRef as any).current = await startUsbMirror(canvasRef.current, (m: string, t: any = 'info') => onLog(m, t));
+            setStreamActive(true);
         } catch (err) {
-            console.error("Error sharing screen:", err);
-            onLog("Failed to start screen share", "error");
+            console.error("USB mirror error:", err);
+            onLog("Failed to start USB mirror. Ensure USB debugging is enabled and use Chrome/Edge over HTTPS.", "error");
         }
     };
 
     const stopStream = () => {
         if (isRecording) stopRecording();
-        
+        // Stop browser capture if any
         if (videoRef.current && videoRef.current.srcObject) {
             const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
             tracks.forEach(track => track.stop());
             videoRef.current.srcObject = null;
-            setStreamActive(false);
         }
+        // Stop USB mirror if active
+        if ((usbControllerRef as any).current) {
+            (usbControllerRef as any).current.stop?.().catch(() => {});
+            (usbControllerRef as any).current = null;
+        }
+        setStreamActive(false);
     };
 
     const startRecording = async () => {
@@ -305,12 +310,9 @@ export const PhoneDisplay: React.FC<PhoneDisplayProps> = ({
                             
                             {/* --- USB MIRROR MODE --- */}
                             <div className={`absolute inset-0 transition-opacity duration-300 ${displayMode === 'usb' ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}>
-                                <video 
-                                    ref={videoRef}
+                                <canvas 
+                                    ref={canvasRef}
                                     className={`w-full h-full object-cover transition-opacity duration-500 ${streamActive ? 'opacity-100' : 'opacity-0'}`}
-                                    autoPlay 
-                                    playsInline 
-                                    muted
                                 />
 
                                 {!streamActive && (
@@ -324,7 +326,7 @@ export const PhoneDisplay: React.FC<PhoneDisplayProps> = ({
                                                 <p className="text-gray-500 dark:text-gray-400 text-sm mb-8">{t.device_auth}</p>
                                                 
                                                 <button 
-                                                    onClick={startScreenShare}
+                                                    onClick={startUsbMirror}
                                                     className="group relative inline-flex items-center justify-center px-8 py-3 font-medium text-white transition-all duration-200 bg-primary-600 dark:bg-white/5 border border-transparent dark:border-white/10 rounded-full hover:bg-primary-700 dark:hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
                                                 >
                                                     <span className="relative flex items-center gap-2">
