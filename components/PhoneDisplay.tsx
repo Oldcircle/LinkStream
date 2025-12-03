@@ -25,6 +25,7 @@ export const PhoneDisplay: React.FC<PhoneDisplayProps> = ({
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const usbControllerRef = useRef<any>(null);
     
     // Modes
     const [displayMode, setDisplayMode] = useState<DisplayMode>('usb');
