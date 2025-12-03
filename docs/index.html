@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LingoLeap - AI Language Tutor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Nunito', 'sans-serif'],
+            },
+            colors: {
+              sky: {
+                450: '#38bdf8',
+                550: '#0ea5e9',
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        font-family: 'Nunito', sans-serif;
+      }
+      /* Custom scrollbar for chat */
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .btn-25d {
+        transition: all 0.1s;
+        border-bottom-width: 4px;
+      }
+      .btn-25d:active {
+        border-bottom-width: 0px;
+        transform: translateY(4px);
+      }
+    </style>
+    <script type="module" crossorigin src="/LinkStream/assets/index-DugzJcUX.js"></script>
+  </head>
+  <body class="bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 overflow-hidden h-screen w-screen selection:bg-sky-200 dark:selection:bg-sky-900">
+    <div id="root" class="h-full w-full"></div>
+  </body>
+</html>
