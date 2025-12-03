@@ -16,6 +16,7 @@ export async function startUsbMirror(canvas: HTMLCanvasElement, onLog: (msg: str
     const scrcpyLib: any = await import('@yume-chan/adb-scrcpy');
     const scrcpyCore: any = await import('@yume-chan/scrcpy');
     const decoderLib: any = await import('@yume-chan/scrcpy-decoder-webcodecs');
+    const streamExtra: any = await import('@yume-chan/stream-extra');
 
     if (!(navigator as any).usb) {
       throw new Error('WebUSB not available: use Chrome/Edge over HTTPS or localhost');
@@ -81,6 +82,19 @@ export async function startUsbMirror(canvas: HTMLCanvasElement, onLog: (msg: str
       }
     }
 
+    if (client?.output?.pipeTo && streamExtra?.WritableStream) {
+      try {
+        await client.output.pipeTo(new streamExtra.WritableStream({
+          write(chunk: any) {
+            const text = typeof chunk === 'string' ? chunk : (() => {
+              try { return new TextDecoder().decode(chunk); } catch { return String(chunk); }
+            })();
+            onLog(`scrcpy: ${text}`, 'info');
+          }
+        }));
+      } catch {}
+    }
+
     const decoder = new decoderLib.ScrcpyDecoderWebCodecs({ canvas });
     const videoStream = client.videoStream ?? client.streams?.video ?? client.streams ?? client;
     if (!videoStream) throw new Error('No video stream from scrcpy');
@@ -106,7 +120,8 @@ export async function startUsbMirror(canvas: HTMLCanvasElement, onLog: (msg: str
     if (e?.name === 'SecurityError') hint = 'SecurityError: use HTTPS (GitHub Pages) or localhost, and enable USB debugging.';
     if (e?.name === 'NotFoundError') hint = 'No device selected or no matching device; ensure phone is connected and unlocked.';
     if (e?.message?.includes('unauthorized')) hint = 'Device unauthorized: accept the USB debugging prompt and check Developer options.';
-    onLog(`USB mirror failed: ${e?.message || e}${hint ? ' | ' + hint : ''}`, 'error');
+    const detail = JSON.stringify({ name: e?.name, message: e?.message, stack: e?.stack }, null, 2);
+    onLog(`USB mirror failed: ${e?.message || e}${hint ? ' | ' + hint : ''}\n${detail}`, 'error');
     throw e;
   }
 

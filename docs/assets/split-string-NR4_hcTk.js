@@ -1,0 +1,1 @@
+import{T as i}from"./stream-BT4ImN5b.js";class m extends i{constructor(t){super({transform(r,e){t(r),e.enqueue(r)}})}}class u extends i{constructor(t){let r;super({transform(e,f){r&&(e=r+e,r=void 0);let s=0;for(;s<e.length;){const n=e.indexOf(t,s);if(n===-1){r=e.substring(s);break}f.enqueue(e.substring(s,n)),s=n+1}},flush(e){r&&e.enqueue(r)}})}}export{m as I,u as S};

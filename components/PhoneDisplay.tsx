@@ -119,9 +119,10 @@ export const PhoneDisplay: React.FC<PhoneDisplayProps> = ({
             // @ts-ignore dynamic module shape
             (usbControllerRef as any).current = await startUsbMirror(canvasRef.current, (m: string, t: any = 'info') => onLog(m, t));
             setStreamActive(true);
-        } catch (err) {
+        } catch (err: any) {
             console.error("USB mirror error:", err);
-            onLog("Failed to start USB mirror. Ensure USB debugging is enabled and use Chrome/Edge over HTTPS.", "error");
+            const msg = err?.message ? `USB mirror failed: ${err.message}` : 'USB mirror failed';
+            onLog(msg, 'error');
         }
     };
 
