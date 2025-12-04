@@ -148,6 +148,21 @@ export const PhoneDisplay: React.FC<PhoneDisplayProps> = ({
         setStreamActive(false);
     };
 
+    const handleDisconnect = () => {
+        stopStream();
+        onLog(t.disconnect, 'info');
+    };
+
+    const handleResetAdb = async () => {
+        try {
+            stopStream();
+            const { resetAdb } = await import('../services/usbMirror');
+            await resetAdb((m: string, type: any = 'info') => onLog(m, type));
+        } catch (e: any) {
+            onLog(e?.message || 'ADB 重置失败', 'error');
+        }
+    };
+
     const startRecording = async () => {
         if (displayMode === 'browser') {
              onLog("Recording only available in USB Mirror mode", "error");
@@ -420,6 +435,7 @@ export const PhoneDisplay: React.FC<PhoneDisplayProps> = ({
             {/* Floating Action Bar - Recording Only */}
             <div className="absolute bottom-10 z-30 flex gap-3 pointer-events-auto">
                 {streamActive && displayMode === 'usb' && (
+                    <>
                     <button 
                         onClick={isRecording ? stopRecording : startRecording}
                         className={`group relative flex items-center gap-3 px-5 py-2.5 rounded-xl border transition-all hover:shadow-lg shadow-sm backdrop-blur-md
@@ -433,6 +449,27 @@ export const PhoneDisplay: React.FC<PhoneDisplayProps> = ({
                         </div>
                         <span className="text-sm font-medium">{isRecording ? t.stop : t.record}</span>
                     </button>
+
+                    <button 
+                        onClick={handleDisconnect}
+                        className="group relative flex items-center gap-3 px-5 py-2.5 rounded-xl border transition-all hover:shadow-lg shadow-sm backdrop-blur-md bg-white/90 dark:bg-black/60 border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10"
+                    >
+                        <div className="p-1 rounded-md transition-transform group-hover:scale-110 bg-gray-100 dark:bg-white/10">
+                            <StopCircle className="w-3.5 h-3.5" />
+                        </div>
+                        <span className="text-sm font-medium">{t.disconnect}</span>
+                    </button>
+
+                    <button 
+                        onClick={handleResetAdb}
+                        className="group relative flex items-center gap-3 px-5 py-2.5 rounded-xl border transition-all hover:shadow-lg shadow-sm backdrop-blur-md bg-white/90 dark:bg-black/60 border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10"
+                    >
+                        <div className="p-1 rounded-md transition-transform group-hover:scale-110 bg-gray-100 dark:bg-white/10">
+                            <RefreshCw className="w-3.5 h-3.5" />
+                        </div>
+                        <span className="text-sm font-medium">{t.reset_adb ?? '重置 ADB'}</span>
+                    </button>
+                    </>
                 )}
             </div>
 

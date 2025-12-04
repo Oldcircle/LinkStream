@@ -189,3 +189,23 @@ export async function startUsbMirror(canvas: HTMLCanvasElement, onLog: (msg: str
   };
 }
 
+export async function resetAdb(onLog: (msg: string, type?: 'info' | 'error' | 'success') => void): Promise<void> {
+  try {
+    onLog('Resetting ADB/WebUSB state...', 'info');
+    const usb = (navigator as any).usb;
+    if (usb && typeof usb.getDevices === 'function') {
+      const devices = await usb.getDevices();
+      onLog(`Known USB devices: ${devices?.length ?? 0}`, 'info');
+      for (const d of devices) {
+        try {
+          if ((d as any).opened) await (d as any).close();
+        } catch {}
+      }
+      onLog('Closed any opened WebUSB device handles.', 'info');
+    }
+    onLog('If PC adb.exe is running, run "adb kill-server" to free ADB.', 'info');
+  } catch (e: any) {
+    onLog(`ADB reset failed: ${e?.message || e}`, 'error');
+  }
+}
+
