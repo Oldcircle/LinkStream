@@ -22,7 +22,6 @@ export async function startUsbMirror(canvas: HTMLCanvasElement, onLog: (msg: str
       throw new Error('WebUSB not available: use Chrome/Edge over HTTPS or localhost');
     }
 
-    const backend = new webusb.AdbWebUsbBackend();
     const filters = [
       // Common Android vendor IDs
       { vendorId: 0x18d1 }, // Google
@@ -35,19 +34,36 @@ export async function startUsbMirror(canvas: HTMLCanvasElement, onLog: (msg: str
     ];
     let device: any;
     try {
-      device = await backend.requestDevice({ filters });
+      if (typeof webusb.AdbWebUsbBackend?.requestDevice === 'function') {
+        device = await webusb.AdbWebUsbBackend.requestDevice({ filters });
+      } else {
+        device = await (navigator as any).usb.requestDevice({ filters });
+      }
     } catch (err: any) {
       // Fallback: show all devices if filters missed
       if (err?.name === 'NotFoundError') {
         onLog('No matching Android device found with filters, showing all devices...', 'info');
-        device = await backend.requestDevice({ filters: [] });
+        if (typeof webusb.AdbWebUsbBackend?.requestDevice === 'function') {
+          device = await webusb.AdbWebUsbBackend.requestDevice({ filters: [] });
+        } else {
+          device = await (navigator as any).usb.requestDevice({ filters: [] });
+        }
       } else {
         throw err;
       }
     }
     if (!device) throw new Error('No device selected');
 
-    const connection = await device.connect();
+    let backend: any;
+    if (typeof webusb.AdbWebUsbBackend?.fromDevice === 'function') {
+      backend = await webusb.AdbWebUsbBackend.fromDevice(device);
+    } else if (typeof webusb.AdbWebUsbBackend === 'function') {
+      backend = new webusb.AdbWebUsbBackend(device);
+    } else {
+      throw new Error('AdbWebUsbBackend not available');
+    }
+
+    const connection = await backend.connect();
     const adb = new adbLib.Adb(connection);
     // Authenticate if necessary (WebUSB usually doesn’t require keys)
     if (typeof adb.connect === 'function') {
