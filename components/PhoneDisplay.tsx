@@ -357,11 +357,20 @@ export const PhoneDisplay: React.FC<PhoneDisplayProps> = ({
                                                 </button>
                                             </div>
                                         ) : (
-                                            <div className="flex flex-col items-center opacity-40">
-                                                <div className="w-16 h-16 border-2 border-dashed border-gray-400 dark:border-gray-600 rounded-2xl flex items-center justify-center mb-4">
-                                                    <Smartphone className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                                            <div className="animate-in fade-in zoom-in duration-500 flex flex-col items-center">
+                                                <div className="w-20 h-20 rounded-full bg-primary-50 dark:bg-gradient-to-br dark:from-primary-500/20 dark:to-accent-500/20 flex items-center justify-center mb-6 ring-1 ring-primary-100 dark:ring-white/10 backdrop-blur-md">
+                                                    <Smartphone className="w-10 h-10 text-primary-600 dark:text-white" />
                                                 </div>
-                                                <p className="text-sm text-gray-500">{t.waiting}</p>
+                                                <p className="text-sm text-gray-500 mb-6">{t.waiting}</p>
+                                                <button 
+                                                    onClick={startUsbMirror}
+                                                    className="group relative inline-flex items-center justify-center px-8 py-3 font-medium text-white transition-all duration-200 bg-primary-600 dark:bg-white/5 border border-transparent dark:border-white/10 rounded-full hover:bg-primary-700 dark:hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                                                >
+                                                    <span className="relative flex items-center gap-2">
+                                                        <Maximize2 className="w-4 h-4" />
+                                                        {t.start_projection}
+                                                    </span>
+                                                </button>
                                             </div>
                                         )}
                                     </div>

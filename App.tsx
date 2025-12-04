@@ -134,20 +134,11 @@ const App: React.FC = () => {
                     };
                     addLog(`Selected device: ${JSON.stringify(meta)}`);
                 } catch {}
-                await device.open();
-                try {
-                    if (device.configuration === null) {
-                         await device.selectConfiguration(1);
-                    }
-                } catch (e) {
-                    addLog(t.auto_negotiation, 'warning');
-                }
-
                 setDeviceName(device.productName || device.manufacturerName || 'Android Device');
                 setConnectionState(ConnectionState.CONNECTED);
                 
                 addLog(`${t.connected_to} ${device.productName}`, 'success');
-                setTimeout(() => addLog(t.video_handshake, 'info'), 800);
+                // Mirror handshake will be logged by usbMirror service when decoding starts
             }
         } catch (error: any) {
             setConnectionState(ConnectionState.ERROR);
