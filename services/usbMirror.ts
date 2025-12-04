@@ -54,6 +54,15 @@ export async function startUsbMirror(canvas: HTMLCanvasElement, onLog: (msg: str
     }
     if (!device) throw new Error('No device selected');
 
+    try {
+      if (typeof (device as any).open === 'function' && !(device as any).opened) {
+        await (device as any).open();
+      }
+      if (typeof (device as any).selectConfiguration === 'function' && (device as any).configuration == null) {
+        try { await (device as any).selectConfiguration(1); } catch {}
+      }
+    } catch {}
+
     let backend: any;
     if (typeof webusb.AdbWebUsbBackend?.fromDevice === 'function') {
       backend = await webusb.AdbWebUsbBackend.fromDevice(device);
@@ -63,7 +72,16 @@ export async function startUsbMirror(canvas: HTMLCanvasElement, onLog: (msg: str
       throw new Error('AdbWebUsbBackend not available');
     }
 
-    const connection = await backend.connect();
+    let connection: any;
+    try {
+      connection = await backend.connect();
+    } catch (connErr: any) {
+      const msg = String(connErr?.message || '');
+      if (msg.includes('claimInterface')) {
+        onLog('Unable to claim USB ADB interface. On Windows, install WinUSB driver for the ADB interface (use Zadig or Google USB Driver), close OEM phone suites (HiSuite/Kies), replug the device, and ensure USB debugging is enabled.', 'error');
+      }
+      throw connErr;
+    }
     const adb = new adbLib.Adb(connection);
     // Authenticate if necessary (WebUSB usually doesn’t require keys)
     if (typeof adb.connect === 'function') {
