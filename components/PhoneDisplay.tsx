@@ -3,6 +3,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { ConnectionState } from '../types';
 import { Maximize2, Loader2, Smartphone, Video, StopCircle, GripHorizontal, MoveDiagonal, Globe, Cable, Search, RefreshCw, ArrowRight } from 'lucide-react';
 import { translations, Language } from '../utils/translations';
+import { startUsbMirror as startUsbMirrorService, resetAdb } from '../services/usbMirror';
 
 interface PhoneDisplayProps {
     connectionState: ConnectionState;
@@ -115,10 +116,9 @@ export const PhoneDisplay: React.FC<PhoneDisplayProps> = ({
             return;
         }
         try {
-            const { startUsbMirror } = await import('../services/usbMirror');
             // Keep ref so we can stop later
             // @ts-ignore dynamic module shape
-            (usbControllerRef as any).current = await startUsbMirror(canvasRef.current, (m: string, t: any = 'info') => onLog(m, t));
+            (usbControllerRef as any).current = await startUsbMirrorService(canvasRef.current, (m: string, t: any = 'info') => onLog(m, t));
             setStreamActive(true);
         } catch (err: any) {
             console.error("USB mirror error:", err);
@@ -156,7 +156,6 @@ export const PhoneDisplay: React.FC<PhoneDisplayProps> = ({
     const handleResetAdb = async () => {
         try {
             stopStream();
-            const { resetAdb } = await import('../services/usbMirror');
             await resetAdb((m: string, type: any = 'info') => onLog(m, type));
         } catch (e: any) {
             onLog(e?.message || 'ADB 重置失败', 'error');
