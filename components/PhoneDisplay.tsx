@@ -122,8 +122,13 @@ export const PhoneDisplay: React.FC<PhoneDisplayProps> = ({
             setStreamActive(true);
         } catch (err: any) {
             console.error("USB mirror error:", err);
-            const msg = err?.message ? `USB mirror failed: ${err.message}` : 'USB mirror failed';
-            onLog(msg, 'error');
+            try {
+                const detail = JSON.stringify({ name: err?.name, message: err?.message, stack: err?.stack }, null, 2);
+                onLog(`USB mirror failed: ${err?.message}\n${detail}`, 'error');
+            } catch {
+                const msg = err?.message ? `USB mirror failed: ${err.message}` : 'USB mirror failed';
+                onLog(msg, 'error');
+            }
         }
     };
 

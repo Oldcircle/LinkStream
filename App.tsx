@@ -113,10 +113,27 @@ const App: React.FC = () => {
         try {
             setConnectionState(ConnectionState.CONNECTING);
             addLog(t.scanning);
+            try {
+                const secure = (window as any).isSecureContext;
+                const ua = (navigator as any).userAgent;
+                addLog(`Env: secure=${secure} ua=${ua}`);
+                const existing = await (navigator as any).usb.getDevices?.();
+                if (existing) addLog(`Known USB devices: ${existing.length}`);
+            } catch {}
             
             const device = await (navigator as any).usb.requestDevice({ filters: [] });
             
             if (device) {
+                try {
+                    const meta = {
+                        vendorId: (device as any)?.vendorId,
+                        productId: (device as any)?.productId,
+                        productName: (device as any)?.productName,
+                        manufacturerName: (device as any)?.manufacturerName,
+                        serialNumber: (device as any)?.serialNumber
+                    };
+                    addLog(`Selected device: ${JSON.stringify(meta)}`);
+                } catch {}
                 await device.open();
                 try {
                     if (device.configuration === null) {
@@ -134,7 +151,12 @@ const App: React.FC = () => {
             }
         } catch (error: any) {
             setConnectionState(ConnectionState.ERROR);
-            addLog(`${t.connection_failed}: ${error.message}`, 'error');
+            try {
+                const detail = JSON.stringify({ name: error?.name, message: error?.message, stack: error?.stack }, null, 2);
+                addLog(`${t.connection_failed}: ${error?.message}\n${detail}`, 'error');
+            } catch {
+                addLog(`${t.connection_failed}: ${error?.message}`, 'error');
+            }
             setConnectionState(ConnectionState.DISCONNECTED);
         }
     };

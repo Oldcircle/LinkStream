@@ -10,6 +10,13 @@ export async function startUsbMirror(canvas: HTMLCanvasElement, onLog: (msg: str
 
   try {
     onLog('Requesting Android device via WebUSB...', 'info');
+    try {
+      const secure = (window as any).isSecureContext;
+      const ua = (navigator as any).userAgent;
+      onLog(`Env: secure=${secure} ua=${ua}`, 'info');
+      const existing = await (navigator as any).usb.getDevices?.();
+      if (existing) onLog(`Known USB devices: ${existing.length}`, 'info');
+    } catch {}
 
     const webusb: any = await import('@yume-chan/adb-backend-webusb');
     const adbLib: any = await import('@yume-chan/adb');
@@ -53,6 +60,16 @@ export async function startUsbMirror(canvas: HTMLCanvasElement, onLog: (msg: str
       }
     }
     if (!device) throw new Error('No device selected');
+    try {
+      const meta = {
+        vendorId: (device as any)?.vendorId ?? (device as any)?.device?.vendorId,
+        productId: (device as any)?.productId ?? (device as any)?.device?.productId,
+        productName: (device as any)?.productName ?? (device as any)?.device?.productName,
+        manufacturerName: (device as any)?.manufacturerName ?? (device as any)?.device?.manufacturerName,
+        serialNumber: (device as any)?.serialNumber ?? (device as any)?.device?.serialNumber
+      };
+      onLog(`Selected device: ${JSON.stringify(meta)}`, 'info');
+    } catch {}
 
     try {
       if (typeof (device as any).open === 'function' && !(device as any).opened) {
@@ -101,6 +118,7 @@ export async function startUsbMirror(canvas: HTMLCanvasElement, onLog: (msg: str
       audio: false,
       tunnelForward: true,
     });
+    try { onLog(`scrcpy options: ${JSON.stringify({ codec: 'h264', maxSize: 1080, bitRate: 8000000, audio: false, tunnel: 'adb', tunnelForward: true })}`, 'info'); } catch {}
 
     let client: any;
     try {
