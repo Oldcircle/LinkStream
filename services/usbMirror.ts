@@ -60,31 +60,32 @@ export async function startUsbMirror(canvas: HTMLCanvasElement, onLog: (msg: str
       }
     }
     if (!device) throw new Error('No device selected');
+    const usbDevice: any = (device as any)?.device ?? device;
     try {
       const meta = {
-        vendorId: (device as any)?.vendorId ?? (device as any)?.device?.vendorId,
-        productId: (device as any)?.productId ?? (device as any)?.device?.productId,
-        productName: (device as any)?.productName ?? (device as any)?.device?.productName,
-        manufacturerName: (device as any)?.manufacturerName ?? (device as any)?.device?.manufacturerName,
-        serialNumber: (device as any)?.serialNumber ?? (device as any)?.device?.serialNumber
+        vendorId: (usbDevice as any)?.vendorId,
+        productId: (usbDevice as any)?.productId,
+        productName: (usbDevice as any)?.productName,
+        manufacturerName: (usbDevice as any)?.manufacturerName,
+        serialNumber: (usbDevice as any)?.serialNumber
       };
       onLog(`Selected device: ${JSON.stringify(meta)}`, 'info');
     } catch {}
 
     try {
-      if (typeof (device as any).open === 'function' && !(device as any).opened) {
-        await (device as any).open();
+      if (typeof (usbDevice as any).open === 'function' && !(usbDevice as any).opened) {
+        await (usbDevice as any).open();
       }
-      if (typeof (device as any).selectConfiguration === 'function' && (device as any).configuration == null) {
-        try { await (device as any).selectConfiguration(1); } catch {}
+      if (typeof (usbDevice as any).selectConfiguration === 'function' && (usbDevice as any).configuration == null) {
+        try { await (usbDevice as any).selectConfiguration(1); } catch {}
       }
     } catch {}
 
     let backend: any;
     if (typeof webusb.AdbWebUsbBackend?.fromDevice === 'function') {
-      backend = await webusb.AdbWebUsbBackend.fromDevice(device);
+      backend = await webusb.AdbWebUsbBackend.fromDevice(usbDevice);
     } else if (typeof webusb.AdbWebUsbBackend === 'function') {
-      backend = new webusb.AdbWebUsbBackend(device);
+      backend = new webusb.AdbWebUsbBackend(usbDevice);
     } else {
       throw new Error('AdbWebUsbBackend not available');
     }
@@ -96,6 +97,9 @@ export async function startUsbMirror(canvas: HTMLCanvasElement, onLog: (msg: str
       const msg = String(connErr?.message || '');
       if (msg.includes('claimInterface')) {
         onLog('Unable to claim USB ADB interface. On Windows, install WinUSB driver for the ADB interface (use Zadig or Google USB Driver), close OEM phone suites (HiSuite/Kies), replug the device, and ensure USB debugging is enabled.', 'error');
+      }
+      if (msg.includes('addEventListener')) {
+        onLog('WebUSB backend initialization failed (addEventListener on undefined). Ensure latest Chrome/Edge is used and the backend received a USBDevice (not a wrapper). Replug the device and retry.', 'error');
       }
       throw connErr;
     }
