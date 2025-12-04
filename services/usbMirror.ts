@@ -72,14 +72,7 @@ export async function startUsbMirror(canvas: HTMLCanvasElement, onLog: (msg: str
       onLog(`Selected device: ${JSON.stringify(meta)}`, 'info');
     } catch {}
 
-    try {
-      if (typeof (usbDevice as any).open === 'function' && !(usbDevice as any).opened) {
-        await (usbDevice as any).open();
-      }
-      if (typeof (usbDevice as any).selectConfiguration === 'function' && (usbDevice as any).configuration == null) {
-        try { await (usbDevice as any).selectConfiguration(1); } catch {}
-      }
-    } catch {}
+    
 
     let backend: any;
     if (typeof webusb.AdbWebUsbBackend?.fromDevice === 'function') {
@@ -101,7 +94,23 @@ export async function startUsbMirror(canvas: HTMLCanvasElement, onLog: (msg: str
       if (msg.includes('addEventListener')) {
         onLog('WebUSB backend initialization failed (addEventListener on undefined). Ensure latest Chrome/Edge is used and the backend received a USBDevice (not a wrapper). Replug the device and retry.', 'error');
       }
-      throw connErr;
+      if (msg.includes('changes interface state') || connErr?.name === 'InvalidStateError') {
+        onLog('USB interface busy; closing device and retrying...', 'info');
+        try { if ((usbDevice as any).opened && typeof (usbDevice as any).close === 'function') await (usbDevice as any).close(); } catch {}
+        await new Promise(r => setTimeout(r, 200));
+        try {
+          if (typeof webusb.AdbWebUsbBackend?.fromDevice === 'function') {
+            backend = await webusb.AdbWebUsbBackend.fromDevice(usbDevice);
+          } else if (typeof webusb.AdbWebUsbBackend === 'function') {
+            backend = new webusb.AdbWebUsbBackend(usbDevice);
+          }
+          connection = await backend.connect();
+        } catch (retryErr: any) {
+          throw retryErr;
+        }
+      } else {
+        throw connErr;
+      }
     }
     const adb = new adbLib.Adb(connection);
     // Authenticate if necessary (WebUSB usually doesn’t require keys)
